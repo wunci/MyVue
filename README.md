@@ -1,9 +1,8 @@
-
 vue的使用相信大家都很熟练了，使用起来简单。但是大部分人不知道其内部的原理是怎么样的，今天我们就来一起实现一个简单的vue
 
 # Object.defineProperty()
 
-实现之前我们得先看一下[Object.defineProperty](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty)的实现，因为vue主要是通过数据劫持来实现的，通过`get`、`set`来完成数据的读取和更新。
+实现之前我们得先看一下[Object.defineProperty](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty)的实现，因为vue主要是通过数据劫持来实现的，通过get、set来完成数据的读取和更新。
 
 ```js
 var obj = {name:'wclimb'}
@@ -28,7 +27,7 @@ Object.defineProperty(obj,'age',{
 > 25
 ```
 从上面可以看到通过get获取数据，通过set监听到数据变化执行相应操作，还是不明白的话可以去看看[Object.defineProperty](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty)文档。
-
+<!-- more -->
 # 流程图
 
 ![](http://www.wclimb.site/img/vue.png)
@@ -37,7 +36,7 @@ Object.defineProperty(obj,'age',{
 
 ```
 <div id="wrap">
-    <p v-bind="test"></p>
+    <p v-html="test"></p>
     <input type="text" v-model="form">
     <input type="text" v-model="form">
     <button @click="changeValue">改变值</button>
@@ -52,7 +51,7 @@ Object.defineProperty(obj,'age',{
         el: '#wrap',
         data:{
             form: '这是form的值',
-            test: '一段测试数据',
+            test: '<strong>我是粗体</strong>',
         },
         methods:{
             changeValue(){
@@ -82,7 +81,7 @@ Object.defineProperty(obj,'age',{
 - `proxyData` 数据代理
 - `observer` 劫持监听所有数据
 - `compile` 解析dom
-- `compileText` 解析dom里除了纯`{{test}}`的操作
+- `compileText` 解析dom里处理纯双花括号的操作
 - `Watcher` 更新视图操作
 
 # Vue constructor 初始化
@@ -128,7 +127,7 @@ class Vue{
     }
 
 ```
-上面主要是代理`data`到最上层，`this.xxx`的方式直接访问`data`
+上面主要是代理data到最上层，his.xxx的方式直接访问data
 
 # observer 劫持监听
 
@@ -164,8 +163,8 @@ class Vue{
         }
     }
 ```
-同样是使用`Object.defineProperty`来监听数据，初始化需要订阅的数据。
-把需要订阅的数据到`push`到`watcherTask`里，等到时候需要更新的时候就可以批量更新数据了。👇下面就是；
+同样是使用Object.defineProperty来监听数据，初始化需要订阅的数据。
+把需要订阅的数据到push到watcherTask里，等到时候需要更新的时候就可以批量更新数据了。👇下面就是；
 遍历订阅池，批量更新视图。
 ```js
     set(newValue){
@@ -214,10 +213,10 @@ class Vue{
                             }
                         })())
                     }
-                    if(node.hasAttribute('v-bind')){
-                        let attrVal = node.getAttribute('v-bind');
+                    if(node.hasAttribute('v-html')){
+                        let attrVal = node.getAttribute('v-html');
                         this.watcherTask[attrVal].push(new Watcher(node,this,attrVal,'innerHTML'))
-                        node.removeAttribute('v-bind')
+                        node.removeAttribute('v-html')
                     }
                     this.compileText(node,'innerHTML')
                     if(node.hasAttribute('@click')){
@@ -234,24 +233,24 @@ class Vue{
 ```
 这里代码比较多，我们拆分看你就会觉得很简单了
 
-1. 首先我们先遍历el元素下面的所有子节点，`node.nodeType === 3` 的意思是当前元素是文本节点，`node.nodeType === 1` 的意思是当前元素是元素节点。因为可能有的是纯文本的形式，如`{{test}}`就是纯文本的文本节点，然后通过判断元素节点是否还存在子节点，如果有的话就递归调用compile方法。下面重头戏来了，我们拆开看：
+1. 首先我们先遍历el元素下面的所有子节点，node.nodeType === 3 的意思是当前元素是文本节点，node.nodeType === 1 的意思是当前元素是元素节点。因为可能有的是纯文本的形式，如纯双花括号就是纯文本的文本节点，然后通过判断元素节点是否还存在子节点，如果有的话就递归调用compile方法。下面重头戏来了，我们拆开看：
 ```js
-if(node.hasAttribute('v-bind')){
-    let attrVal = node.getAttribute('v-bind');
+if(node.hasAttribute('v-html')){
+    let attrVal = node.getAttribute('v-html');
     this.watcherTask[attrVal].push(new Watcher(node,this,attrVal,'innerHTML'))
-    node.removeAttribute('v-bind')
+    node.removeAttribute('v-html')
 }
 ```
-上面这个首先判断`node`节点上是否有`v-bind`这种指令，如果存在的话，我们就发布订阅，怎么发布订阅呢？只需要把当前需要订阅的数据`push`到`watcherTask`里面，然后到时候在设置值的时候就可以批量更新了，实现双向数据绑定，也就是下面的操作
+上面这个首先判断node节点上是否有v-html这种指令，如果存在的话，我们就发布订阅，怎么发布订阅呢？只需要把当前需要订阅的数据push到watcherTask里面，然后到时候在设置值的时候就可以批量更新了，实现双向数据绑定，也就是下面的操作
 ```js
 that.watcherTask[key].forEach(task => {
     task.update()
 })
 ```
-然后push的值是一个`Watcher`的实例，首先他new的时候会先执行一次，执行的操作就是去把`{{test}}` -> 1，也就是说把我们写好的模板数据更新到模板视图上。
+然后push的值是一个Watcher的实例，首先他new的时候会先执行一次，执行的操作就是去把纯双花括号 -> 1，也就是说把我们写好的模板数据更新到模板视图上。
 最后把当前元素属性剔除出去，我们用Vue的时候也是看不到这种指令的，不剔除也不影响
 
-至于`Watcher`是什么，看下面就知道了
+至于Watcher是什么，看下面就知道了
 
 # Watcher 
 
@@ -273,12 +272,12 @@ class Watcher{
 之前发布订阅之后走了这里面的操作，意思就是把当前元素如：node.innerHTML = '这是data里面的值'、node.value = '这个是表单的数据'
 
 那么我们为什么不直接去更新呢，还需要update做什么，不是多此一举吗？
-其实update记得吗？我们在订阅池里面需要批量更新，就是通过调用`Watcher`原型上的`update`方法。
+其实update记得吗？我们在订阅池里面需要批量更新，就是通过调用Watcher原型上的update方法。
 
 
 # 效果
 
-大家可以浏览器看一下效果，由于本人太懒了，`gif`效果图就先不放了，哈哈
+大家可以浏览器看一下效果，由于本人太懒了，gif效果图就先不放了，哈哈
 
 # 完整代码
 
@@ -286,3 +285,5 @@ class Watcher{
 
 # 参考
 
+[剖析Vue原理&实现双向绑定MVVM](https://segmentfault.com/a/1190000006599500)
+[仿Vue实现极简双向绑定](https://segmentfault.com/a/1190000015375217)

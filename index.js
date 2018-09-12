@@ -68,10 +68,10 @@ class Vue{
                         }
                     })())
                 }
-                if(node.hasAttribute('v-bind')){
-                    let attrVal = node.getAttribute('v-bind');
+                if(node.hasAttribute('v-html')){
+                    let attrVal = node.getAttribute('v-html');
                     this.watcherTask[attrVal].push(new Watcher(node,this,attrVal,'innerHTML'))
-                    node.removeAttribute('v-bind')
+                    node.removeAttribute('v-html')
                 }
                 this.compileText(node,'innerHTML')
                 if(node.hasAttribute('@click')){
