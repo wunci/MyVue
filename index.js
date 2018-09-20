@@ -85,14 +85,20 @@ class Vue{
         }
     }
     compileText(node,type){
-        let reg = /\{\{(.*)\}\}/g, txt = node.textContent;
+        let reg = /\{\{(.*?)\}\}/g, txt = node.textContent;
         if(reg.test(txt)){
             node.textContent = txt.replace(reg,(matched,value)=>{
                 let tpl = this.watcherTask[value] || []
                 tpl.push(new Watcher(node,this,value,type))
-                return value.split('.').reduce((val, key) => {
-                    return this.data[key]; 
-                }, this.$el);
+                if(value.split('.').length > 1){
+                    let v = null
+                    value.split('.').forEach((val,i)=>{
+                        v = !v ? this[val] : v[val]
+                    })
+                    return v
+                }else{
+                    return this[value]
+                }
             })
         }
     }
@@ -106,7 +112,7 @@ class Watcher{
         this.type = type;
         this.update()
     }
-    update(){
+    update(){       
         this.el[this.type] = this.vm.data[this.value]
     }
 }

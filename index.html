@@ -8,11 +8,12 @@
 </head>
 <body>
     <div id="wrap">
+        {{obj.test}}
         <p v-html="test"></p>
         <input type="text" v-model="form">
         <input type="text" v-model="form">
         <button @click="changeValue">改变值</button>
-        {{form}}
+        {{form}} 
     </div>
     <script src="./index.js"></script>
     <script>
@@ -21,6 +22,9 @@
             data:{
                 form: '这是form的值',
                 test: '<strong>我是粗体</strong>',
+                obj:{
+                    test:123
+                }
             },
             methods:{
                 changeValue(){
