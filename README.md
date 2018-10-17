@@ -96,7 +96,7 @@ Object.defineProperty(obj,'age',{
             Object.keys(data).forEach((key)=> {
                 this.proxyData(key);
             });
-            this.methods = obj.methods // 事件方法
+            this.methods = options.methods // 事件方法
             this.watcherTask = {}; // 需要监听的任务列表
             this.observer(data); // 初始化劫持监听所有数据
             this.compile(this.$el); // 解析dom
