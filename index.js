@@ -88,6 +88,7 @@ class Vue{
         let reg = /\{\{(.*?)\}\}/g, txt = node.textContent;
         if(reg.test(txt)){
             node.textContent = txt.replace(reg,(matched,value)=>{
+                value = value.trim()
                 let tpl = this.watcherTask[value] || []
                 tpl.push(new Watcher(node,this,value,type))
                 if(value.split('.').length > 1){
