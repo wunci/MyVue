@@ -1,4 +1,6 @@
 
+**补充：写一个较为强大的Vue，支持虚拟DOM、diff更新以及基本的API，项目地址：https://github.com/wclimb/euv**
+
 vue的使用相信大家都很熟练了，使用起来简单。但是大部分人不知道其内部的原理是怎么样的，今天我们就来一起实现一个简单的vue
 
 # Object.defineProperty()
