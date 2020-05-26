@@ -1,7 +1,7 @@
 class Vue{
     constructor(options = {}){
         this.$el = document.querySelector(options.el);
-        let data = this.data = options.data; 
+        let data = this.data = options.data;
         // 代理data，使其能直接this.xxx的方式访问data，正常的话需要this.data.xxx
         Object.keys(data).forEach((key)=> {
             this.proxyData(key);
@@ -26,25 +26,32 @@ class Vue{
     }
     observer(data){
         let that = this
-        Object.keys(data).forEach(key=>{
-            let value = data[key]
-            this.watcherTask[key] = []
-            Object.defineProperty(data,key,{
-                configurable: false,
-                enumerable: true,
-                get(){
-                    return value
-                },
-                set(newValue){
-                    if(newValue !== value){
-                        value = newValue
-                        that.watcherTask[key].forEach(task => {
-                            task.update()
-                        })
-                    }
+      printKey(data, '')
+      function printKey(obj,varname){
+        for(let key in obj){
+          let value = obj[key]
+          if(typeof obj[key]==='object'){
+            printKey(obj[key],`${varname}.${key}`)
+          }else{
+            that.watcherTask[key] = []
+            Object.defineProperty(obj,key,{
+              configurable: false,
+              enumerable: true,
+              get(){
+                return value
+              },
+              set(newValue){
+                if(newValue !== value){
+                  value = newValue
+                  that.watcherTask[`${varname}.${key}`.slice(1)].forEach(task => {
+                    task.update()
+                  })
                 }
+              }
             })
-        })
+          }
+        }
+      }
     }
     compile(el){
         var nodes = el.childNodes;
@@ -53,7 +60,7 @@ class Vue{
             if(node.nodeType === 3){
                 var text = node.textContent.trim();
                 if (!text) continue;
-                this.compileText(node,'textContent')                
+                this.compileText(node,'textContent')
             }else if(node.nodeType === 1){
                 if(node.childNodes.length > 0){
                     this.compile(node)
@@ -89,8 +96,8 @@ class Vue{
         if(reg.test(txt)){
             node.textContent = txt.replace(reg,(matched,value)=>{
                 value = value.trim()
-                let tpl = this.watcherTask[value] || []
-                tpl.push(new Watcher(node,this,value,type))
+                this.watcherTask[value]  = this.watcherTask[value] || []
+                this.watcherTask[value].push(new Watcher(node,this,value,type))
                 if(value.split('.').length > 1){
                     let v = null
                     value.split('.').forEach((val,i)=>{
@@ -113,7 +120,7 @@ class Watcher{
         this.type = type;
         this.update()
     }
-    update(){       
-        this.el[this.type] = this.vm.data[this.value]
+    update(){
+        this.el[this.type] = eval(`this.vm.data.${this.value}`)
     }
 }

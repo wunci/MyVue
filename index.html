@@ -9,11 +9,12 @@
 <body>
     <div id="wrap">
         {{obj.test}}
-        <p v-html="test"></p>
+			<button @click="changeTestValue">改变obj.test值</button>
+			<p v-html="htmlStr"></p>
         <input type="text" v-model="form">
         <input type="text" v-model="form">
-        <button @click="changeValue">改变值</button>
-        {{form}} 
+        <button @click="changeFormValue">改变值</button>
+        {{form}}
     </div>
     <script src="./index.js"></script>
     <script>
@@ -21,16 +22,19 @@
             el: '#wrap',
             data:{
                 form: '这是form的值',
-                test: '<strong>我是粗体</strong>',
+              	htmlStr: '<strong>我是粗体</strong>',
                 obj:{
                     test:123
                 }
             },
             methods:{
-                changeValue(){
-                    console.log(this.form)
-                    this.form = '值被我改变了，气不气？'
-                }
+              changeFormValue(){
+                console.log(this.form)
+                this.form = '值被我改变了，气不气？'
+              },
+              changeTestValue(){
+                this.obj.test = '456'
+              }
             }
         })
     </script>
